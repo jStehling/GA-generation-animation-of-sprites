@@ -33,9 +33,26 @@ def decode(ind:List[int]) -> Tuple[float,float]:
 
 
 #Executes the math solver and returns a score ($0.0$ to $1.0$) based on how close lam got to 1.0
-def calculate_fitness(individual:List[int], img1:np.ndarray, img2:np.ndarray, A:np.ndarray) -> float:
+def calculate_fitness(individual:List[int], img1:np.ndarray, img2:np.ndarray, A:np.ndarray) -> List[List[int], float]:
+    #print(f"calculating fitness of individual {individual}")
     radius, increment = decode(individual)
-    x, lam, r, inc, r_initial, inc_initial = run_iterations(30, img1, img2, A, 0.001, radius, increment)
+
+    lam_list = []
+    #temporary hard coded values
+    #img side length = 32, 1024 total pixels, 1024/16 = 64,
+    #16 is length of solution vector as A_arr is 16x16
+    for x in range(0, 256, 16):
+        temp1 = (np.array(img1[x:x+16]))
+        temp2 = (np.array(img1[x:x+16]))
+        lam, x = run_iterations(30, temp1, temp2, A, 0.001, radius, increment, False)
+        lam_list.append(lam)
+
+    avg = 0
+    for x in lam_list:
+        avg += x
+    lam = avg / len(lam_list)
+
+    #x, lam, radius, increment, initial_r, initial_inc = run_iterations(30, img1, img2, A, 0.001, radius, increment, False)
 
     # Changed scoring system - it currently makes it so that there's a bunch
     # of 0's and only looking for a needle in a haystack
@@ -49,12 +66,13 @@ def calculate_fitness(individual:List[int], img1:np.ndarray, img2:np.ndarray, A:
     # return score
 
     # Improved scoring system
-    return 1 / (1 + abs(1 - lam)) # Makes it so that the score of an individual is relative to 1.0
+    return [individual, 1 / (1 + abs(1 - lam))] # Makes it so that the score of an individual is relative to 1.0
 
 
 #Sorts the overall population by score (in descending order) takes the best 10 from that list and gets a random set of individuals
 #Random individual selection count is determined by the target size (if the # of individuals after selecting the top 10 is under 10, then it just selects the remaining, otherwise by default it is 10)
 def selection(pop_with_scores:List[Tuple[List[int], float]]) -> Tuple[List[List[int]], List[List[int]]]:
+    print("selecting best individuals and chuds")
     pop_with_scores.sort(key=lambda x: x[1], reverse=True)
 
     set_of_individuals = [individual[0] for individual in pop_with_scores]

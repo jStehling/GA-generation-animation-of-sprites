@@ -3,10 +3,11 @@ from typing import List, Tuple
 import numpy as np
 from genetic_algorithm import initialize_population, calculate_fitness, selection, crossover, mutate, decode
 from math_calculations import run_iterations
-
+import math
+from joblib import Parallel, delayed
 if __name__ == '__main__':
     start_time = time.time()
-    side = 4
+    side = 64
     size = side ** 2
 
     #The IMG_1/2_arr variables need to be assigned a 1d array of floating points between 1 and 0 (or in this case 0.9 and 0.1)
@@ -14,19 +15,24 @@ if __name__ == '__main__':
     #IMG_2_arr = process_image("img2.png", side=side) (not implemented)
     IMG_1_arr = np.round(np.random.uniform(0.1, 0.9, size), 1)
     IMG_2_arr = np.round(np.random.uniform(0.1, 0.9, size), 1)
-    A_arr = np.random.randint(-5, 5, (size, size))
-
+    #A_arr = np.random.randint(-5, 5, (size, size))
+    #OPTIMIZATION TEST
+    A_arr = np.random.randint(-5,5,size=(16, 16))
+    #
     population: List[List[int]] = initialize_population()
     generations: int = 30
 
     for i in range(0, generations):
         scored_pop: List[Tuple[List[int], float]] = []
 
-        for individual in population:
-            score = calculate_fitness(individual, IMG_1_arr, IMG_2_arr, A_arr)
-            scored_pop.append((individual, score))
+
+        print(f"Analyzing Generation: {i}")
+        scored_pop = Parallel(n_jobs=-1)(delayed(calculate_fitness)(individual, IMG_1_arr, IMG_2_arr, A_arr) for individual in population)
+        print(f"Finished Analyzing Generation: {i}")
+       #breakpoint()
 
         new_population: List[List[int]] = []
+
         parents, random_list = selection(scored_pop)
         while len(new_population) < 20:
             for j in range(0, len(parents), 2): #Will throw an Index out of Bounds error if the number of parents selected is not even currently
@@ -47,9 +53,8 @@ if __name__ == '__main__':
 
     #Rescore the population (as the score gets removed when running selection
     scored_pop = []
-    for individual in population:
-        score = calculate_fitness(individual, IMG_1_arr, IMG_2_arr, A_arr)
-        scored_pop.append((individual, score))
+    scored_pop = Parallel(n_jobs=-1)(delayed(calculate_fitness)(individual, IMG_1_arr, IMG_2_arr, A_arr) for individual in population)
+
 
     #Select the TRUE best
     best_individuals, best_random = selection(scored_pop)
@@ -63,5 +68,6 @@ if __name__ == '__main__':
     print("=======")
     print(f"Ending Image: \n {IMG_2_arr}")
     print("=======")
-    x, lam, r, inc, r_initial, inc_initial = run_iterations(30, IMG_1_arr, IMG_2_arr, A_arr, 0.001, final_r, final_inc, comments=False)
-    print(f"Ending image with best individual: \n {x}")
+    #x, lam, r, inc, r_initial, inc_initial = run_iterations(30, IMG_1_arr, IMG_2_arr, A_arr, 0.001, final_r, final_inc, comments=False)
+    #print(f"Ending image with best individual: \n {x}")
+    print(f"end time: {time.time() - start_time}")

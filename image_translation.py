@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
-
+import math_calculations as m
+from typing import List, Tuple
 
 #Produces a 1x64 array of values between 0.1 and 0.9
 #Commented code is incase we wanted to separate the image array by rows for multithreading processing
@@ -31,7 +32,6 @@ def custom_rounding(arr):
 
     return result
 
-def generate_animation_gif():
+def generate_animation_gif(individual:List[int], img1:np.ndarray, img2:np.ndarray, A:np.ndarray):
     pass
-
 
